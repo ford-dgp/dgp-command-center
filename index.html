@@ -670,7 +670,7 @@
 
 <script>
 // ── CONFIG ──
-const ANTHROPIC_KEY = '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';
+const API_ENDPOINT = '/api/proxy';
 
 // ── CLOCK ──
 function updateClock() {
@@ -796,8 +796,8 @@ Return ONLY valid JSON, no markdown, no backticks:
 
     setStatus('Pulling all data — about 25 seconds...');
 
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST", headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    const resp = await fetch(API_ENDPOINT, {
+      method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
         model:"claude-sonnet-4-20250514", max_tokens:1000,
         system: sys,
@@ -935,7 +935,7 @@ async function resolveLink(i) {
   fb.style.color = 'var(--text-dim)'; fb.classList.add('visible');
   const tasks = [c.due_diligence_date?`Due Diligence Deadline — ${c.property}, due ${c.due_diligence_date}, priority urgent`:null,c.closing_date?`Closing Date — ${c.property}, due ${c.closing_date}, priority urgent`:null].filter(Boolean).join('; ');
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:`Search SureSend for "${input}" using search_people. If found, create tasks: ${tasks}. Respond ONLY with JSON: {"found":true/false,"contact_name":"","tasks_created":true/false,"message":""}`,messages:[{role:"user",content:`Search and create tasks for "${input}".`}],mcp_servers:[{type:"url",url:"https://suresend.ai/mcp",name:"ss"}]})});
+    const r = await fetch(API_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:`Search SureSend for "${input}" using search_people. If found, create tasks: ${tasks}. Respond ONLY with JSON: {"found":true/false,"contact_name":"","tasks_created":true/false,"message":""}`,messages:[{role:"user",content:`Search and create tasks for "${input}".`}],mcp_servers:[{type:"url",url:"https://suresend.ai/mcp",name:"ss"}]})});
     const d = await r.json();
     const raw = d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
     let res; try{res=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch(e){res={found:false,message:raw.substring(0,100)};}
@@ -955,7 +955,7 @@ async function resolveNew(i) {
   const parts=c.client_name.trim().split(' ');
   const tasks=[c.due_diligence_date?`Due Diligence Deadline — ${c.property}, due ${c.due_diligence_date}, priority urgent`:null,c.closing_date?`Closing Date — ${c.property}, due ${c.closing_date}, priority urgent`:null].filter(Boolean).join('; ');
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:`${isLLC?`Create company "${c.client_name}" using create_company, industry "Real Estate".`:`Create person first_name="${parts[0]}", last_name="${parts.slice(1).join(' ')||'Unknown'}" using create_person.`} Then create tasks: ${tasks}. Respond ONLY JSON: {"created":true/false,"type":"person or company","name":"","tasks_created":true/false,"message":""}`,messages:[{role:"user",content:"Create the contact and tasks now."}],mcp_servers:[{type:"url",url:"https://suresend.ai/mcp",name:"ss"}]})});
+    const r = await fetch(API_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:`${isLLC?`Create company "${c.client_name}" using create_company, industry "Real Estate".`:`Create person first_name="${parts[0]}", last_name="${parts.slice(1).join(' ')||'Unknown'}" using create_person.`} Then create tasks: ${tasks}. Respond ONLY JSON: {"created":true/false,"type":"person or company","name":"","tasks_created":true/false,"message":""}`,messages:[{role:"user",content:"Create the contact and tasks now."}],mcp_servers:[{type:"url",url:"https://suresend.ai/mcp",name:"ss"}]})});
     const d = await r.json();
     const raw = d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
     let res; try{res=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch(e){res={created:false,message:raw.substring(0,100)};}
